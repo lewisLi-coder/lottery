@@ -345,7 +345,6 @@
   <header>
     <div class="wrap">
       <h1>大乐透中奖查询</h1>
-      <p>固定五组号码，自动查询中国体彩网公开开奖数据，优先使用当期官方单注奖金。</p>
     </div>
   </header>
 
@@ -357,15 +356,13 @@
       <div class="metric"><span>中奖注数</span><strong id="sumWins">0</strong></div>
     </section>
 
-    <section class="card">
-      <h2>固定号码</h2>
+    <details class="card fold">
+      <summary>查看固定号码</summary>
       <div class="ticket-list" id="ticketList"></div>
-    </section>
+    </details>
 
     <section class="card">
       <h2>查询</h2>
-      <label for="issues">指定期号</label>
-      <textarea id="issues" placeholder="例如：24001、24002；多个期号可用空格、逗号或换行分隔"></textarea>
       <div class="field-row">
         <div>
           <label for="stake">每组每期花费</label>
@@ -387,7 +384,6 @@
         </div>
       </div>
       <div class="actions">
-        <button id="queryBtn">查指定期号</button>
         <button id="latestBtn" class="secondary">查最近开奖</button>
         <button id="weekBtn" class="secondary">查所选周</button>
         <button id="monthBtn" class="warning">查所选月</button>
@@ -439,12 +435,10 @@
 
     const els = {
       ticketList: document.getElementById("ticketList"),
-      issues: document.getElementById("issues"),
       stake: document.getElementById("stake"),
       pageSize: document.getElementById("pageSize"),
       weekPicker: document.getElementById("weekPicker"),
       monthPicker: document.getElementById("monthPicker"),
-      queryBtn: document.getElementById("queryBtn"),
       latestBtn: document.getElementById("latestBtn"),
       weekBtn: document.getElementById("weekBtn"),
       monthBtn: document.getElementById("monthBtn"),
@@ -499,10 +493,6 @@
       const now = new Date();
       els.weekPicker.value = weekInputValue(now);
       els.monthPicker.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
-    }
-
-    function parseIssues(text) {
-      return Array.from(new Set(text.split(/[\s,，;；、]+/).map(s => s.trim()).filter(Boolean)));
     }
 
     async function fetchHistory(pageSize = 80, pageNo = 1) {
@@ -824,7 +814,7 @@
     }
 
     function setBusy(busy) {
-      [els.queryBtn, els.latestBtn, els.weekBtn, els.monthBtn].forEach(btn => btn.disabled = busy);
+      [els.latestBtn, els.weekBtn, els.monthBtn].forEach(btn => btn.disabled = busy);
     }
 
     function showMessage(text, ok = false) {
@@ -841,21 +831,6 @@
         '"': "&quot;",
         "'": "&#39;"
       }[ch]));
-    }
-
-    async function queryByIssues() {
-      const issues = parseIssues(els.issues.value);
-      if (!issues.length) {
-        showMessage("请输入至少一个期号。");
-        return;
-      }
-      await runQuery(async () => {
-        const draws = await fetchHistory(Math.max(Number(els.pageSize.value || 80), issues.length));
-        const found = draws.filter(draw => issues.includes(draw.issue));
-        const missing = issues.filter(issue => !found.some(draw => draw.issue === issue));
-        renderRows(rowsForDraws(found));
-        showMessage(missing.length ? `已查询，未在最近记录中找到：${missing.join("、")}` : `已查询 ${found.length} 期。`, !missing.length);
-      });
     }
 
     async function queryLatest() {
@@ -900,7 +875,6 @@
     initPeriodPickers();
     renderSummary([]);
 
-    els.queryBtn.addEventListener("click", queryByIssues);
     els.latestBtn.addEventListener("click", queryLatest);
     els.weekBtn.addEventListener("click", () => queryRange("selectedWeek"));
     els.monthBtn.addEventListener("click", () => queryRange("selectedMonth"));
