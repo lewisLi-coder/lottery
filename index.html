@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>大乐透中奖查询</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #101828;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --red: #c81e1e;
+      --blue: #1d64d8;
+      --green: #087443;
+      --dark: #12343b;
+      --amber: #a15c07;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.5;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--dark);
+      color: #fff;
+      padding: max(14px, env(safe-area-inset-top)) 16px 14px;
+      box-shadow: 0 4px 18px rgba(16, 24, 40, 0.18);
+    }
+
+    .wrap {
+      width: min(760px, 100%);
+      margin: 0 auto;
+      padding: 0 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    p { margin: 0; }
+
+    main {
+      padding: 12px 0 calc(28px + env(safe-area-inset-bottom));
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 78px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.15;
+      word-break: break-word;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+
+    .ticket-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .ticket {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    .ticket-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .balls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .ball {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .front { background: var(--red); }
+    .back { background: var(--blue); }
+
+    .ball.hit {
+      outline: 3px solid #facc15;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px rgba(250, 204, 21, 0.18);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    textarea,
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 12px;
+      color: var(--text);
+      background: #fff;
+      font: inherit;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    textarea:focus,
+    input:focus {
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #0f766e;
+      color: #fff;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.secondary { background: #344054; }
+    button.warning { background: #9a3412; }
+    button:disabled { opacity: 0.58; cursor: wait; }
+
+    .notice {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border-left: 4px solid var(--amber);
+      background: #fff7ed;
+      color: #7a3b00;
+      font-size: 13px;
+      white-space: pre-line;
+    }
+
+    .notice.ok {
+      border-left-color: var(--green);
+      background: #ecfdf3;
+      color: #14532d;
+    }
+
+    .hidden { display: none; }
+
+    .result-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .result {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .result-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .result-title {
+      font-weight: 800;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      background: #f2f4f7;
+      color: #344054;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag.win {
+      background: #ecfdf3;
+      color: #067647;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 10px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .ball-row {
+      display: grid;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .ball-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    details.fold {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+
+    details.fold > summary {
+      cursor: pointer;
+      color: #344054;
+      font-weight: 800;
+      list-style-position: inside;
+    }
+
+    details.fold .result-list {
+      margin-top: 10px;
+    }
+
+    .notes {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .notes ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    code {
+      background: #eef2f6;
+      border-radius: 5px;
+      padding: 1px 5px;
+    }
+
+    @media (min-width: 680px) {
+      h1 { font-size: 24px; }
+      .summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .ticket-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>大乐透中奖查询</h1>
+      <p>固定五组号码，自动查询中国体彩网公开开奖数据，优先使用当期官方单注奖金。</p>
+    </div>
+  </header>
+
+  <main class="wrap stack">
+    <section class="summary">
+      <div class="metric"><span>预计中奖</span><strong id="sumPrize">¥0</strong></div>
+      <div class="metric"><span>购彩金额</span><strong id="sumSpend">¥0</strong></div>
+      <div class="metric"><span>净收益</span><strong id="sumNet">¥0</strong></div>
+      <div class="metric"><span>中奖注数</span><strong id="sumWins">0</strong></div>
+    </section>
+
+    <section class="card">
+      <h2>固定号码</h2>
+      <div class="ticket-list" id="ticketList"></div>
+    </section>
+
+    <section class="card">
+      <h2>查询</h2>
+      <label for="issues">指定期号</label>
+      <textarea id="issues" placeholder="例如：24001、24002；多个期号可用空格、逗号或换行分隔"></textarea>
+      <div class="field-row">
+        <div>
+          <label for="stake">每组每期花费</label>
+          <input id="stake" type="number" min="0" step="0.01" value="2">
+        </div>
+        <div>
+          <label for="pageSize">拉取期数</label>
+          <input id="pageSize" type="number" min="10" max="200" step="10" value="80">
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label for="weekPicker">选择周</label>
+          <input id="weekPicker" type="week">
+        </div>
+        <div>
+          <label for="monthPicker">选择月</label>
+          <input id="monthPicker" type="month">
+        </div>
+      </div>
+      <div class="actions">
+        <button id="queryBtn">查指定期号</button>
+        <button id="latestBtn" class="secondary">查最近开奖</button>
+        <button id="weekBtn" class="secondary">查所选周</button>
+        <button id="monthBtn" class="warning">查所选月</button>
+      </div>
+      <div id="message" class="notice hidden"></div>
+    </section>
+
+    <section class="card">
+      <h2>中奖结果</h2>
+      <div id="resultList" class="result-list">
+        <p class="notes">点击上方按钮开始查询。</p>
+      </div>
+    </section>
+
+    <section class="card notes">
+      <h2>注意事项</h2>
+      <ul>
+        <li>接口已写死为中国体彩网公开历史开奖接口：<code>webapi.sporttery.cn</code>。</li>
+        <li>手机浏览器如遇到跨域拦截，可把本文件部署到静态网站再访问，或后续加一个轻量代理。</li>
+        <li>页面会优先读取接口返回的 <code>prizeLevelList</code> 官方单注奖金；接口缺失时才按规则 fallback 估算。</li>
+        <li>一等奖、二等奖和奖池、销售额、中奖注数有关；三至七等奖在奖池达到规则门槛时也可能上浮。</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const API_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry";
+    const GAME_NO = "85";
+    const HISTORY_KEY = "dlt_mobile_history_v2";
+    const STAKE_KEY = "dlt_mobile_stake_v2";
+
+    const FIXED_TICKETS = [
+      { name: "第 1 组", front: [7, 12, 21, 29, 33], back: [3, 8] },
+      { name: "第 2 组", front: [5, 14, 18, 26, 35], back: [2, 11] },
+      { name: "第 3 组", front: [9, 16, 20, 28, 31], back: [4, 9] },
+      { name: "第 4 组", front: [3, 11, 19, 25, 34], back: [6, 10] },
+      { name: "第 5 组", front: [8, 13, 22, 27, 30], back: [1, 12] }
+    ];
+
+    const PRIZES = {
+      1: { label: "一等奖", amount: 0, floating: true },
+      2: { label: "二等奖", amount: 0, floating: true },
+      3: { label: "三等奖", amount: 5000 },
+      4: { label: "四等奖", amount: 300 },
+      5: { label: "五等奖", amount: 150 },
+      6: { label: "六等奖", amount: 15 },
+      7: { label: "七等奖", amount: 5 }
+    };
+
+    const els = {
+      ticketList: document.getElementById("ticketList"),
+      issues: document.getElementById("issues"),
+      stake: document.getElementById("stake"),
+      pageSize: document.getElementById("pageSize"),
+      weekPicker: document.getElementById("weekPicker"),
+      monthPicker: document.getElementById("monthPicker"),
+      queryBtn: document.getElementById("queryBtn"),
+      latestBtn: document.getElementById("latestBtn"),
+      weekBtn: document.getElementById("weekBtn"),
+      monthBtn: document.getElementById("monthBtn"),
+      message: document.getElementById("message"),
+      resultList: document.getElementById("resultList"),
+      sumPrize: document.getElementById("sumPrize"),
+      sumSpend: document.getElementById("sumSpend"),
+      sumNet: document.getElementById("sumNet"),
+      sumWins: document.getElementById("sumWins")
+    };
+
+    let currentRows = [];
+
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function money(n) {
+      return "¥" + Number(n || 0).toLocaleString("zh-CN", {
+        minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function renderTickets() {
+      els.ticketList.innerHTML = FIXED_TICKETS.map(ticket => `
+        <div class="ticket">
+          <div class="ticket-top">
+            <strong>${ticket.name}</strong>
+            <span>固定查询</span>
+          </div>
+          <div class="balls">
+            ${ticket.front.map(n => `<span class="ball front">${pad(n)}</span>`).join("")}
+            ${ticket.back.map(n => `<span class="ball back">${pad(n)}</span>`).join("")}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function getStake() {
+      const value = Math.max(0, Number(els.stake.value || 0));
+      localStorage.setItem(STAKE_KEY, String(value));
+      return value;
+    }
+
+    function loadSavedStake() {
+      const saved = localStorage.getItem(STAKE_KEY);
+      if (saved !== null) els.stake.value = saved;
+    }
+
+    function initPeriodPickers() {
+      const now = new Date();
+      els.weekPicker.value = weekInputValue(now);
+      els.monthPicker.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+    }
+
+    function parseIssues(text) {
+      return Array.from(new Set(text.split(/[\s,，;；、]+/).map(s => s.trim()).filter(Boolean)));
+    }
+
+    async function fetchHistory(pageSize = 80, pageNo = 1) {
+      const url = new URL(API_URL);
+      url.searchParams.set("gameNo", GAME_NO);
+      url.searchParams.set("provinceId", "0");
+      url.searchParams.set("pageSize", String(pageSize));
+      url.searchParams.set("isVerify", "1");
+      url.searchParams.set("pageNo", String(pageNo));
+
+      let response;
+      try {
+        response = await fetch(url.toString(), { method: "GET" });
+      } catch (err) {
+        throw new Error("接口请求失败，可能是网络不可用或浏览器跨域拦截：" + err.message);
+      }
+      if (!response.ok) throw new Error("接口返回 HTTP " + response.status);
+
+      const json = await response.json();
+      const list = json?.value?.list || json?.data?.list || json?.list || [];
+      if (!Array.isArray(list) || !list.length) throw new Error("接口返回中没有识别到开奖记录。");
+
+      const draws = list.map(normalizeDraw).filter(Boolean);
+      if (!draws.length) throw new Error("接口开奖记录格式无法识别。");
+      saveHistory(draws);
+      return draws;
+    }
+
+    function normalizeDraw(item) {
+      const issue = String(item.lotteryDrawNum || item.issue || item.expect || item.period || "").trim();
+      const date = normalizeDate(item.lotteryDrawTime || item.drawDate || item.date || item.openTime || "");
+      const raw = item.lotteryDrawResult || item.openCode || item.code || item.result || "";
+      const parsed = parseDrawNumbers(raw);
+      if (!issue || !parsed) return null;
+      return {
+        issue,
+        date,
+        front: parsed.front,
+        back: parsed.back,
+        prizeMap: parsePrizeMap(item.prizeLevelList),
+        poolBalance: parseAmount(item.poolBalanceAfterdraw),
+        saleAmount: parseAmount(item.totalSaleAmount)
+      };
+    }
+
+    function parsePrizeMap(list) {
+      const map = {};
+      if (!Array.isArray(list)) return map;
+      list.forEach(item => {
+        const level = String(item.prizeLevel || item.awardLevel || "").replace(/\s/g, "");
+        if (!level || level.includes("追加")) return;
+        const grade = ["一等奖", "二等奖", "三等奖", "四等奖", "五等奖", "六等奖", "七等奖"].indexOf(level) + 1;
+        const amount = parseAmount(item.stakeAmount || item.awardAmount || item.prizeAmount);
+        if (grade > 0 && amount > 0) map[grade] = amount;
+      });
+      return map;
+    }
+
+    function parseAmount(value) {
+      const cleaned = String(value || "").replace(/[^\d.]/g, "");
+      const amount = Number(cleaned);
+      return Number.isFinite(amount) ? amount : 0;
+    }
+
+    function parseDrawNumbers(raw) {
+      const text = String(raw || "");
+      const parts = text.split(/[+|]/);
+      if (parts.length >= 2) {
+        const front = numberList(parts[0]);
+        const back = numberList(parts.slice(1).join(" "));
+        if (validDraw(front, back)) return { front, back };
+      }
+      const nums = numberList(text);
+      if (nums.length >= 7) {
+        const front = nums.slice(0, 5);
+        const back = nums.slice(5, 7);
+        if (validDraw(front, back)) return { front, back };
+      }
+      return null;
+    }
+
+    function numberList(value) {
+      return String(value || "").match(/\d+/g)?.map(Number).filter(Number.isFinite) || [];
+    }
+
+    function validDraw(front, back) {
+      return validZone(front, 5, 1, 35) && validZone(back, 2, 1, 12);
+    }
+
+    function validZone(nums, count, min, max) {
+      return nums.length === count &&
+        new Set(nums).size === count &&
+        nums.every(n => Number.isInteger(n) && n >= min && n <= max);
+    }
+
+    function normalizeDate(value) {
+      const match = String(value || "").match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/);
+      return match ? match[0].replace(/\//g, "-").replace(/-(\d)(?=-|$)/g, "-0$1") : "";
+    }
+
+    function saveHistory(draws) {
+      const map = new Map(loadHistory().map(draw => [draw.issue, draw]));
+      draws.forEach(draw => map.set(draw.issue, draw));
+      const next = Array.from(map.values()).sort((a, b) => String(b.issue).localeCompare(String(a.issue)));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    }
+
+    function loadHistory() {
+      try {
+        const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        return Array.isArray(list) ? list : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function countMatches(ticket, draw) {
+      const frontSet = new Set(draw.front);
+      const backSet = new Set(draw.back);
+      return {
+        front: ticket.front.filter(n => frontSet.has(n)).length,
+        back: ticket.back.filter(n => backSet.has(n)).length
+      };
+    }
+
+    function gradeFor(front, back) {
+      if (front === 5 && back === 2) return 1;
+      if (front === 5 && back === 1) return 2;
+      if ((front === 5 && back === 0) || (front === 4 && back === 2)) return 3;
+      if (front === 4 && back === 1) return 4;
+      if ((front === 4 && back === 0) || (front === 3 && back === 2)) return 5;
+      if ((front === 3 && back === 1) || (front === 2 && back === 2)) return 6;
+      if ((front === 3 && back === 0) || (front === 2 && back === 1) || (front === 1 && back === 2) || (front === 0 && back === 2)) return 7;
+      return 0;
+    }
+
+    function rowsForDraws(draws) {
+      return draws.flatMap(draw => FIXED_TICKETS.map(ticket => {
+        const matches = countMatches(ticket, draw);
+        const grade = gradeFor(matches.front, matches.back);
+        const officialPrize = draw.prizeMap?.[grade] || 0;
+        return {
+          draw,
+          ticket,
+          matches,
+          grade,
+          prize: grade ? (officialPrize || PRIZES[grade].amount) : 0,
+          prizeExact: grade ? officialPrize > 0 : true
+        };
+      }));
+    }
+
+    function splitRowsByWin(rows) {
+      return {
+        winning: rows.filter(row => row.grade > 0),
+        other: rows.filter(row => row.grade === 0)
+      };
+    }
+
+    function ticketBallClass(ticket, draw, zone, number) {
+      const base = zone === "front" ? "ball front" : "ball back";
+      const drawNums = zone === "front" ? draw.front : draw.back;
+      return drawNums.includes(number) ? base + " hit" : base;
+    }
+
+    function drawBallClass(ticket, draw, zone, number) {
+      const base = zone === "front" ? "ball front" : "ball back";
+      const ticketNums = zone === "front" ? ticket.front : ticket.back;
+      return ticketNums.includes(number) ? base + " hit" : base;
+    }
+
+    function renderRows(rows) {
+      currentRows = rows;
+      if (!rows.length) {
+        els.resultList.innerHTML = `<p class="notes">当前没有可统计的开奖数据。</p>`;
+        renderSummary(rows);
+        return;
+      }
+
+      const grouped = splitRowsByWin(rows);
+      const parts = [];
+      if (grouped.winning.length) {
+        parts.push(...grouped.winning.map(renderResultCard));
+      } else {
+        parts.push(`<p class="notes">当前范围没有中奖记录。可展开下方查看全部未中奖明细。</p>`);
+      }
+      if (grouped.other.length) {
+        parts.push(`
+          <details class="fold">
+            <summary>查看未中奖明细（${grouped.other.length} 条）</summary>
+            <div class="result-list">
+              ${grouped.other.map(renderResultCard).join("")}
+            </div>
+          </details>
+        `);
+      }
+      els.resultList.innerHTML = parts.join("");
+
+      renderSummary(rows);
+    }
+
+    function renderResultCard(row) {
+      const prize = row.grade ? PRIZES[row.grade] : null;
+      const gradeText = prize ? prize.label : "未中奖";
+      const prizeNote = row.grade ? (row.prizeExact ? "（官方）" : "（估）") : "";
+      const meta = [
+        row.draw.poolBalance ? "奖池 " + money(row.draw.poolBalance) : "",
+        row.draw.saleAmount ? "销量 " + money(row.draw.saleAmount) : ""
+      ].filter(Boolean).join(" · ");
+      return `
+        <article class="result">
+          <div class="result-head">
+            <div>
+              <div class="result-title">${escapeHtml(row.draw.issue)} 期 · ${escapeHtml(row.ticket.name)}</div>
+              <div class="notes">${escapeHtml(row.draw.date || "日期未知")}${meta ? " · " + escapeHtml(meta) : ""}</div>
+            </div>
+            <span class="tag ${row.grade ? "win" : ""}">${gradeText}</span>
+          </div>
+          <div class="ball-row">
+            <div class="ball-label">我的号码</div>
+            <div class="balls">
+              ${row.ticket.front.map(n => `<span class="${ticketBallClass(row.ticket, row.draw, "front", n)}">${pad(n)}</span>`).join("")}
+              ${row.ticket.back.map(n => `<span class="${ticketBallClass(row.ticket, row.draw, "back", n)}">${pad(n)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="ball-row">
+            <div class="ball-label">开奖号码</div>
+            <div class="balls">
+              ${row.draw.front.map(n => `<span class="${drawBallClass(row.ticket, row.draw, "front", n)}">${pad(n)}</span>`).join("")}
+              ${row.draw.back.map(n => `<span class="${drawBallClass(row.ticket, row.draw, "back", n)}">${pad(n)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="result-grid">
+            <div>前区命中：${row.matches.front}</div>
+            <div>后区命中：${row.matches.back}</div>
+            <div>中奖金额：${row.grade && row.prize ? money(row.prize) + prizeNote : "未中奖"}</div>
+            <div>结果：${row.grade ? "中奖" : "未中奖"}</div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderSummary(rows) {
+      const issues = new Set(rows.map(row => row.draw.issue));
+      const prize = rows.reduce((sum, row) => sum + row.prize, 0);
+      const spend = issues.size * FIXED_TICKETS.length * getStake();
+      const net = prize - spend;
+      const wins = rows.filter(row => row.grade > 0).length;
+      els.sumPrize.textContent = money(prize);
+      els.sumSpend.textContent = money(spend);
+      els.sumNet.textContent = money(net);
+      els.sumNet.className = net >= 0 ? "positive" : "negative";
+      els.sumWins.textContent = String(wins);
+    }
+
+    function formatDateRange(mode, draws) {
+      const now = new Date();
+      if (mode === "week" || mode === "selectedWeek") {
+        const start = mode === "selectedWeek" ? startOfInputWeek(els.weekPicker.value) : startOfWeek(now);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 7);
+        return draws.filter(draw => inRange(draw.date, start, end));
+      }
+      if (mode === "month" || mode === "selectedMonth") {
+        const selected = mode === "selectedMonth" ? monthParts(els.monthPicker.value) : null;
+        return draws.filter(draw => {
+          const d = dateOf(draw.date);
+          const year = selected ? selected.year : now.getFullYear();
+          const month = selected ? selected.month : now.getMonth();
+          return d && d.getFullYear() === year && d.getMonth() === month;
+        });
+      }
+      return draws;
+    }
+
+    function dateOf(value) {
+      if (!value) return null;
+      const d = new Date(value + "T00:00:00");
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function inRange(value, start, end) {
+      const d = dateOf(value);
+      return !!d && d >= start && d < end;
+    }
+
+    function startOfWeek(date) {
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const day = d.getDay() || 7;
+      d.setDate(d.getDate() - day + 1);
+      return d;
+    }
+
+    function startOfInputWeek(value) {
+      const match = String(value || "").match(/^(\d{4})-W(\d{2})$/);
+      if (!match) return startOfWeek(new Date());
+      const year = Number(match[1]);
+      const week = Number(match[2]);
+      const jan4 = new Date(year, 0, 4);
+      const week1Start = startOfWeek(jan4);
+      const start = new Date(week1Start);
+      start.setDate(week1Start.getDate() + (week - 1) * 7);
+      return start;
+    }
+
+    function weekInputValue(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const day = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - day);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+      return `${d.getUTCFullYear()}-W${pad(week)}`;
+    }
+
+    function monthParts(value) {
+      const match = String(value || "").match(/^(\d{4})-(\d{2})$/);
+      if (!match) return null;
+      return { year: Number(match[1]), month: Number(match[2]) - 1 };
+    }
+
+    function setBusy(busy) {
+      [els.queryBtn, els.latestBtn, els.weekBtn, els.monthBtn].forEach(btn => btn.disabled = busy);
+    }
+
+    function showMessage(text, ok = false) {
+      els.message.textContent = text;
+      els.message.className = "notice" + (ok ? " ok" : "");
+      els.message.classList.remove("hidden");
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[ch]));
+    }
+
+    async function queryByIssues() {
+      const issues = parseIssues(els.issues.value);
+      if (!issues.length) {
+        showMessage("请输入至少一个期号。");
+        return;
+      }
+      await runQuery(async () => {
+        const draws = await fetchHistory(Math.max(Number(els.pageSize.value || 80), issues.length));
+        const found = draws.filter(draw => issues.includes(draw.issue));
+        const missing = issues.filter(issue => !found.some(draw => draw.issue === issue));
+        renderRows(rowsForDraws(found));
+        showMessage(missing.length ? `已查询，未在最近记录中找到：${missing.join("、")}` : `已查询 ${found.length} 期。`, !missing.length);
+      });
+    }
+
+    async function queryLatest() {
+      await runQuery(async () => {
+        const draws = await fetchHistory(Number(els.pageSize.value || 80));
+        renderRows(rowsForDraws(draws.slice(0, 1)));
+        showMessage("已显示最近 1 期开奖。", true);
+      });
+    }
+
+    async function queryRange(mode) {
+      await runQuery(async () => {
+        const draws = await fetchHistory(Number(els.pageSize.value || 80));
+        const scoped = formatDateRange(mode, draws);
+        renderRows(rowsForDraws(scoped));
+        showMessage(`${rangeLabel(mode)}共统计 ${scoped.length} 期。`, true);
+      });
+    }
+
+    function rangeLabel(mode) {
+      if (mode === "week") return "本周";
+      if (mode === "month") return "本月";
+      if (mode === "selectedWeek") return els.weekPicker.value || "所选周";
+      if (mode === "selectedMonth") return els.monthPicker.value || "所选月";
+      return "当前范围";
+    }
+
+    async function runQuery(fn) {
+      setBusy(true);
+      try {
+        await fn();
+      } catch (err) {
+        renderRows([]);
+        showMessage(err.message);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    renderTickets();
+    loadSavedStake();
+    initPeriodPickers();
+    renderSummary([]);
+
+    els.queryBtn.addEventListener("click", queryByIssues);
+    els.latestBtn.addEventListener("click", queryLatest);
+    els.weekBtn.addEventListener("click", () => queryRange("selectedWeek"));
+    els.monthBtn.addEventListener("click", () => queryRange("selectedMonth"));
+    els.stake.addEventListener("change", () => renderSummary(currentRows));
+    queryRange("week");
+  </script>
+</body>
+</html>
